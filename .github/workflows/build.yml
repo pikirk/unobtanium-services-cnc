@@ -1,0 +1,94 @@
+name: Lambda Engraver Build
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - "terraform/**"
+      - ".github/workflows/build.yml"
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - "terraform/**"
+      - ".github/workflows/build.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ROLE_NAME: github-actions-oidc
+  AWS_REGION_OIDC: us-east-1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        env: [ dev, stage, prod ]
+        stack_path:
+          - terraform
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE_NAME }}
+          aws-region: ${{ env.AWS_REGION_OIDC }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Run Tests
+        run: npm test
+        continue-on-error: false
+
+      - name: Build
+        run: npm run build
+
+      - name: Package
+        run: |
+          cd dist
+          zip -r ../engraver-handler_${{ matrix.env }}.zip .
+          cd ..
+          ls -lh engraver-handler_${{ matrix.env }}.zip
+
+      - name: Upload Artifact (Lambda)
+        uses: actions/upload-artifact@v4
+        with:
+          name: engraver-handler-${{ matrix.env }}-${{ github.sha }}
+          path: engraver-handler_${{ matrix.env }}.zip
+          retention-days: 30
+
+      - name: Clean Up
+        run: |
+          rm -rf dist
