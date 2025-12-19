@@ -4,8 +4,8 @@ locals {
   aws_region = "us-east-1"
 
   # Environment suffix (dev|stage|prod) is provided via var.env.
-  env = var.env
-  stack_name  = "engraver-handler"
+  env        = var.env
+  stack_name = "engraver-handler"
 
   tags = {
     org        = local.org

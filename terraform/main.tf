@@ -33,8 +33,8 @@ resource "aws_lambda_function" "engraver_handler" {
   ]
 
   tags = merge(local.tags, {
-    Name        = "Engraver Handler Lambda"
-  }) 
+    Name = "Engraver Handler Lambda"
+  })
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
@@ -42,8 +42,8 @@ resource "aws_cloudwatch_log_group" "lambda" {
   retention_in_days = 3
 
   tags = merge(local.tags, {
-    Name        = "Engraver Handler Logs"
-  }) 
+    Name = "Engraver Handler Logs"
+  })
 }
 
 # lambda permission for API Gateway to invoke
