@@ -29,7 +29,8 @@ permissions:
 env:
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
-  TF_PLAN_NAME: "engraver_lambda"
+  TF_PLAN_NAME: "engraver-lambda"
+  NPM_PACKAGE_NAME: engraver-handler
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ROLE_NAME: github-actions-oidc
   AWS_REGION_OIDC: us-east-1
@@ -44,8 +45,7 @@ jobs:
         env: [ dev, stage, prod ]
         bucket_name:
           - lambda-artifacts-engraver
-        package_name: 
-          - engraver-handler
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,23 +77,21 @@ jobs:
         run: npm run build
 
       - name: Package
-        run: npm run package
+        run: |
+          npm run package
+          mv ${{ env.NPM_PACKAGE_NAME}}.zip ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
 
       - name: Upload Artifact (GitHub)
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.package_name}}-${{ matrix.env }}-${{ github.sha }}
-          path: ${{ matrix.package_name}}.zip
+          name: ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}-${{ github.sha }}
+          path: ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
           retention-days: 30
-
-      - name: Upload Arifact (S3)
-        run: |
-          aws s3 cp ${{ matrix.package_name}}.zip s3://${{matrix.bucket_name}}-/${{ matrix.env }}/handlers/engraver-handler_${{ matrix.env }}.zip
 
       - name: Clean Up
         run: |
           rm -rf dist
-          rm ${{ matrix.package_name}}.zip
+          rm ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
 
   terraform-plan:
     runs-on: ubuntu-latest
@@ -188,3 +186,48 @@ jobs:
             ${{ matrix.stack_path }}/.terraform.lock.hcl
           if-no-files-found: error
           retention-days: 7
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: [terraform-plan, npm-build]
+
+    strategy:
+      fail-fast: true
+      matrix:
+        env: [ dev ]
+        stack_path:
+          - terraform 
+        bucket_name:
+          - lambda-artifacts-engraver
+
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE_NAME }}
+          aws-region: ${{ env.AWS_REGION_OIDC }}
+
+      - name: Download Artifacts (Lambda)
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ env.NPM_PACKAGE_NAME }}_${{ matrix.env }}-${{ github.sha }}
+          merge-multiple: true
+          patterns:
+            ${{ env.NPM_PACKAGE_NAME }}_${{ matrix.env }}.zip
+      - run: ls -l .
+
+      - name: Download Artifacts (Plan)
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ env.TF_PLAN_NAME }}_${{ matrix.env }}-${{ github.sha }}
+          merge-multiple: true
+          patterns:
+            ${{ env.TF_PLAN_NAME }}_${{ matrix.env }}.zip
+      - run: ls -l .
+
+     
