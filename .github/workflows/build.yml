@@ -77,6 +77,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Package
+        run: |
+          cd dist
+          zip -r ${{ env.NPM_PACKAGE_NAME }}.zip .
+
       - name: Rename Package
         working-directory: ${{ github.workspace }}
         run: |
