@@ -86,7 +86,7 @@ jobs:
       - name: Rename Package
         working-directory: ${{ github.workspace }}
         run: |
-          mv ${{ env.NPM_PACKAGE_NAME}}.zip ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
+          mv ${{ github.workspace }}/${{ env.NPM_PACKAGE_NAME}}.zip ${{ github.workspace }}/${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
           ls -l .
 
       - name: Upload Artifact (GitHub)
