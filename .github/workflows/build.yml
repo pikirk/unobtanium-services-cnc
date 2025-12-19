@@ -30,6 +30,7 @@ env:
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
   TF_PLAN_NAME: engraver-lambda
+  S3_BUCKET_NAME: lambda-artifacts-engraver
   NPM_PACKAGE_NAME: engraver-lambda
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ROLE_NAME: github-actions-oidc
@@ -197,10 +198,6 @@ jobs:
         env: [ dev ]
         stack_path:
           - terraform 
-        bucket_name:
-          - lambda-artifacts-engraver
-
-    environment: dev
 
     steps:
       - name: Checkout
@@ -223,7 +220,45 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tfplan__${{ matrix.env }}__${{ env.TF_PLAN_NAME }}__${{ github.sha }}
-          path: ${{github.workspace }}
+          path: ${{github.workspace }}/terraform
       - run: ls -l .
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Working directory: $(pwd)"
+          echo "Initializing Terraform for ${{ matrix.stack_path }} in ${{ matrix.env }} environment"
+          terraform init \
+            -backend-config="./init/backend-${{matrix.env}}.hcl" \
+            -reconfigure \
+            -no-color
+      
+      - name: Terraform Workspace
+        working-directory: ${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Working directory: $(pwd)"
+          terraform workspace select ${{ matrix.env }} || terraform workspace new ${{ matrix.env }}
+          terraform workspace list
+
+      - name: Terraform Apply (DEV)
+        working-directory: ${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tf_artifact_name = ${{env.TF_PLAN_NAME }}_${{ matrix.env }}.tfplan
+          echo "Working directory: $(pwd)"
+          echo "Applying Terraform plan '$tf_artifact_name' to ${{ matrix.env }} environment"
+          terraform apply -auto-approve $tf_artifact_name -no-color
+
+      - name: Upload S3
+        run: |
+          aws s3 cp ${{env.TF_PLAN_NAME}}_${{ matrix.env }}.zip s3://${{ env.S3_BUCKET_NAME }}/handlers/${{env.TF_PLAN_NAME}}_${{ matrix.env }}.zip  \
+            --metadata "git-commit=${{ github.sha }},git-branch=${{ github.ref_name }},build-timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          
+          echo "Successfully S3 upload to://${{ env.S3_BUCKET_NAME }}/handlers/${{env.TF_PLAN_NAME}}_${{ matrix.env }}.zip"
 
      
