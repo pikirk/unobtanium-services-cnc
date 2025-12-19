@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
 
 resource "aws_iam_role" "lambda_execution_role" {
   name               = "${var.lambda_function_name}-execution-role-${local.env}"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
 
   tags = {
     Name = "Lambda Execution Role for ${var.lambda_function_name}-${local.env}"
@@ -43,8 +43,8 @@ resource "aws_iam_policy" "lambda_logging_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_logging" {
-  role       = aws_iam_role.lambda_execution.name
-  policy_arn = aws_iam_policy.lambda_logging.arn
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = aws_iam_policy.lambda_logging_policy.arn
 }
 
 # If your Lambda needs to access other AWS services (DynamoDB, S3, etc.), add additional policies here
