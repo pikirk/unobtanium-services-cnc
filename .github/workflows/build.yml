@@ -84,7 +84,7 @@ jobs:
       - name: Upload Artifact (GitHub)
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}-${{ github.sha }}
+          name: npm__${{ matrix.env }}__${{ env.NPM_PACKAGE_NAME}}__${{ matrix.env }}__${{ github.sha }}
           path: ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
           retention-days: 30
 
@@ -215,19 +215,15 @@ jobs:
       - name: Download Artifacts (Lambda)
         uses: actions/download-artifact@v4
         with:
-          path: ${{ env.NPM_PACKAGE_NAME }}_${{ matrix.env }}-${{ github.sha }}
-          merge-multiple: true
-          patterns:
-            ${{ env.NPM_PACKAGE_NAME }}_${{ matrix.env }}.zip
+          name: npm__${{ matrix.env }}__${{ env.NPM_PACKAGE_NAME}}__${{ matrix.env }}__${{ github.sha }}
+          path: ${{github.workspace }}
       - run: ls -l .
 
       - name: Download Artifacts (Plan)
         uses: actions/download-artifact@v4
         with:
-          path: ${{ env.TF_PLAN_NAME }}_${{ matrix.env }}-${{ github.sha }}
-          merge-multiple: true
-          patterns:
-            ${{ env.TF_PLAN_NAME }}_${{ matrix.env }}.zip
+          name: tfplan__${{ matrix.env }}__${{ env.TF_PLAN_NAME }}__${{ github.sha }}
+          path: ${{github.workspace }}
       - run: ls -l .
 
      
