@@ -80,7 +80,11 @@ jobs:
       - name: Package
         run: |
           npm run package
+
+      - name: Rename Package
+        run: |
           mv ${{ env.NPM_PACKAGE_NAME}}.zip ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
+          ls -l .
 
       - name: Upload Artifact (GitHub)
         uses: actions/upload-artifact@v4
