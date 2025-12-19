@@ -29,8 +29,8 @@ permissions:
 env:
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
-  TF_PLAN_NAME: "engraver-lambda"
-  NPM_PACKAGE_NAME: engraver-handler
+  TF_PLAN_NAME: engraver-lambda
+  NPM_PACKAGE_NAME: engraver-lambda
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ROLE_NAME: github-actions-oidc
   AWS_REGION_OIDC: us-east-1
