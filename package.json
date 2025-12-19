@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "package": "npm run build && cd dist && zip -r ../engraver-handler.zip .",
+    "package": "npm run clean && run build && cd dist && zip -r ../engraver-handler.zip",
     "test": "jest",
     "lint": "eslint src/**/*.ts"
   },
