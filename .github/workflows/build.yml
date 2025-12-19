@@ -224,6 +224,11 @@ jobs:
           name: tfplan__${{ matrix.env }}__${{ env.TF_PLAN_NAME }}__${{ github.sha }}
           path: ${{github.workspace }}/terraform
       - run: ls -l .
+      
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
 
       - name: Terraform Init
         working-directory: ${{ matrix.stack_path }}
