@@ -1,5 +1,10 @@
+# Data block to look up existing API Gateway
+data "aws_apigatewayv2_api" "main" {
+  api_id = var.api_gateway_identifier
+}
+
 resource "aws_lambda_function" "engraver_handler" {
-  function_name = "${var.lambda_function_name}"
+  function_name = var.lambda_function_name
   role          = aws_iam_role.lambda_execution_role.arn
   handler       = var.lambda_handler
   runtime       = var.lambda_runtime
@@ -19,7 +24,7 @@ resource "aws_lambda_function" "engraver_handler" {
 
   # AWS X-Ray tracing
   tracing_config {
-    mode = "Active"  
+    mode = "Active"
   }
 
   depends_on = [
@@ -43,12 +48,11 @@ resource "aws_cloudwatch_log_group" "lambda" {
   }
 }
 
-# Lambda permission for API Gateway to invoke (will be created in core-infrastructure)
-# This is just a placeholder comment showing what core-infrastructure will need:
-# resource "aws_lambda_permission" "api_gateway" {
-#   statement_id  = "AllowAPIGatewayInvoke"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.engraver_handler.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn    = "${data.aws_api_gateway_rest_api.main.execution_arn}/*/*"
-# }
+# lambda permission for API Gateway to invoke
+resource "aws_lambda_permission" "api_gateway" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.engraver_handler.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${data.aws_apigatewayv2_api.main.execution_arn}/*/*"
+}

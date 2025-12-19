@@ -6,3 +6,4 @@ lambda_timeout_secs          = 30
 lambda_memory_size_mb        = 256
 lambda_handler               = "index.handler"
 lambda_artifact_key          = "handlers/engraver-handler.zip"
+api_gateway_identifier       = "qzjucqr19e"
