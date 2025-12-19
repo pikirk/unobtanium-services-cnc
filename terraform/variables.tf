@@ -45,3 +45,8 @@ variable "lambda_artifact_key" {
   type        = string
   default     = "handlers/engraver-handler.zip"
 }
+
+variable "api_gateway_identifier" {
+  description = "Name of the existing API Gateway to attach routes to"
+  type        = string
+}

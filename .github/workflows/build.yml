@@ -1,0 +1,186 @@
+name: Lambda Engraver Build
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - "terraform/**"
+      - ".github/workflows/build.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - "terraform/**"
+      - ".github/workflows/build.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  TF_PLAN_NAME: "engraver_lambda"
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ROLE_NAME: github-actions-oidc
+  AWS_REGION_OIDC: us-east-1
+
+jobs:
+  npm-build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        env: [ dev, stage, prod ]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE_NAME }}
+          aws-region: ${{ env.AWS_REGION_OIDC }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      #- name: Lint
+      #  run: npm run lint
+      #  continue-on-error: false
+
+      #- name: Run Tests
+      #  run: npm test
+      #  continue-on-error: false
+
+      - name: Build
+        run: npm run build
+
+      - name: Package
+        run: |
+          cd dist
+          zip -r ../engraver-handler_${{ matrix.env }}.zip .
+          cd ..
+          ls -lh engraver-handler_${{ matrix.env }}.zip
+
+      - name: Upload Artifact (Lambda)
+        uses: actions/upload-artifact@v4
+        with:
+          name: engraver-handler-${{ matrix.env }}-${{ github.sha }}
+          path: engraver-handler_${{ matrix.env }}.zip
+          retention-days: 30
+
+      - name: Clean Up
+        run: |
+          rm -rf dist
+
+  terraform-plan:
+    runs-on: ubuntu-latest
+    needs: npm-build
+    strategy:
+      fail-fast: true
+      matrix:
+        env: [ dev, stage, prod ]
+        stack_path:
+          - terraform 
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE_NAME }}
+          aws-region: ${{ env.AWS_REGION_OIDC }}
+
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Format
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Setup Linter
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Initialize Linter
+        run: tflint --init
+
+      - name: Terraform Lint
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
+        id: tflint
+        run: tflint --recursive --format=compact
+        continue-on-error: true
+
+      - name: Terraform Init
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Working directory: $(pwd)"
+          echo "Initializing Terraform for ${{ matrix.stack_path }} in ${{ matrix.env }} environment"
+          terraform init \
+            -backend-config="./init/backend-${{matrix.env}}.hcl" \
+            -reconfigure \
+            -no-color
+
+      - name: Terraform Workspace
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Working directory: $(pwd)"
+          terraform workspace select ${{ matrix.env }} || terraform workspace new ${{ matrix.env }}
+          terraform workspace list
+      
+      - name: Compute Plan Name
+        id: plan_metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          plan_file="${{ env.TF_PLAN_NAME }}_${{ matrix.env }}.tfplan"
+          echo "plan_file=$plan_file"   >> "$GITHUB_OUTPUT"
+
+      - name: Terraform Plan
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Working directory: $(pwd)"
+          terraform plan -var-file="./env/${{ matrix.env }}.tfvars" -out="${{ steps.plan_metadata.outputs.plan_file }}" -no-color
+          terraform show -json "${{ steps.plan_metadata.outputs.plan_file }}" > "${{ steps.plan_metadata.outputs.plan_file }}.json"
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan__${{ matrix.env }}__${{ env.TF_PLAN_NAME }}__${{ github.sha }}
+          path: |
+            ${{ matrix.stack_path }}/${{ steps.plan_metadata.outputs.plan_file }}
+            ${{ matrix.stack_path }}/${{ steps.plan_metadata.outputs.plan_file }}.json
+            ${{ matrix.stack_path }}/.terraform.lock.hcl
+          if-no-files-found: error
+          retention-days: 7
