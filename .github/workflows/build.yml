@@ -14,7 +14,6 @@ on:
   push:
     branches:
       - main
-      - develop
     paths:
       - 'src/**'
       - 'package.json'
@@ -118,7 +117,7 @@ jobs:
           terraform_version: 1.6.6
 
       - name: Terraform Format
-        working-directory: ${{ github.workspace }}/stacks/
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
         id: fmt
         run: terraform fmt -check -recursive
         continue-on-error: true
@@ -132,13 +131,13 @@ jobs:
         run: tflint --init
 
       - name: Terraform Lint
-        working-directory: ${{ github.workspace }}/stacks/
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
         id: tflint
         run: tflint --recursive --format=compact
         continue-on-error: true
 
       - name: Terraform Init
-        working-directory: ${{ matrix.stack_path }}
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
         shell: bash
         run: |
           set -euo pipefail
@@ -150,7 +149,7 @@ jobs:
             -no-color
 
       - name: Terraform Workspace
-        working-directory: ${{ matrix.stack_path }}
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
         shell: bash
         run: |
           set -euo pipefail
@@ -167,7 +166,7 @@ jobs:
           echo "plan_file=$plan_file"   >> "$GITHUB_OUTPUT"
 
       - name: Terraform Plan
-        working-directory: ${{ matrix.stack_path }}
+        working-directory: ${{ github.workspace }}/${{ matrix.stack_path }}
         shell: bash
         run: |
           set -euo pipefail
