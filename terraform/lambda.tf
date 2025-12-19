@@ -1,6 +1,6 @@
 resource "aws_lambda_function" "engraver_handler" {
   function_name = "${var.lambda_function_name}"
-  role          = aws_iam_role.lambda_execution.arn
+  role          = aws_iam_role.lambda_execution_role.arn
   handler       = var.lambda_handler
   runtime       = var.lambda_runtime
 
