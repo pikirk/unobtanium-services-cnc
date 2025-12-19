@@ -42,7 +42,10 @@ jobs:
       fail-fast: true
       matrix:
         env: [ dev, stage, prod ]
-    
+        bucket_name:
+          - lambda-artifacts-engraver
+        package_name: 
+          - engraver-handler
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,22 +77,23 @@ jobs:
         run: npm run build
 
       - name: Package
-        run: |
-          cd dist
-          zip -r ../engraver-handler_${{ matrix.env }}.zip .
-          cd ..
-          ls -lh engraver-handler_${{ matrix.env }}.zip
+        run: npm run package
 
-      - name: Upload Artifact (Lambda)
+      - name: Upload Artifact (GitHub)
         uses: actions/upload-artifact@v4
         with:
-          name: engraver-handler-${{ matrix.env }}-${{ github.sha }}
-          path: engraver-handler_${{ matrix.env }}.zip
+          name: ${{ matrix.package_name}}-${{ matrix.env }}-${{ github.sha }}
+          path: ${{ matrix.package_name}}.zip
           retention-days: 30
+
+      - name: Upload Arifact (S3)
+        run: |
+          aws s3 cp ${{ matrix.package_name}}.zip s3://${{matrix.bucket_name}}-/${{ matrix.env }}/handlers/engraver-handler_${{ matrix.env }}.zip
 
       - name: Clean Up
         run: |
           rm -rf dist
+          rm ${{ matrix.package_name}}.zip
 
   terraform-plan:
     runs-on: ubuntu-latest
