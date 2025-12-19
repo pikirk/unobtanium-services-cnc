@@ -32,20 +32,18 @@ resource "aws_lambda_function" "engraver_handler" {
     aws_s3_bucket.lambda_artifacts
   ]
 
-  tags = {
+  tags = merge(local.tags, {
     Name        = "Engraver Handler Lambda"
-    Environment = local.env
-  }
+  }) 
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/${var.lambda_function_name}-${local.env}"
   retention_in_days = 3
 
-  tags = {
+  tags = merge(local.tags, {
     Name        = "Engraver Handler Logs"
-    Environment = local.env
-  }
+  }) 
 }
 
 # lambda permission for API Gateway to invoke
