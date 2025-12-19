@@ -256,9 +256,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tf_artifact_name = ${{env.TF_PLAN_NAME }}_${{ matrix.env }}.tfplan
+          tf_artifact_name=${{env.TF_PLAN_NAME }}_${{ matrix.env }}.tfplan
+          echo "Artifact name: $tf_artifact_name"
           echo "Working directory: $(pwd)"
-          echo "Applying Terraform plan '$tf_artifact_name' to ${{ matrix.env }} environment"
+          echo "Applying Terraform plan $tf_artifact_name to ${{ matrix.env }} environment"
           terraform apply -auto-approve $tf_artifact_name -no-color
 
       - name: Upload S3
