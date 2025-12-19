@@ -5,10 +5,6 @@ locals {
 
   # Environment suffix (dev|stage|prod) is provided via var.env.
   env = var.env
-
-  # stack organization conventions
-  # unobtanium/core/{env}/{stack_group}/{stack}/terraform.tfstate
-  stack_group = "lambda-functions"
   stack_name  = "engraver-handler"
 
   tags = {
