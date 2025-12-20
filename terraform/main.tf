@@ -41,9 +41,9 @@ resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/${var.lambda_function_name}-${local.env}"
   retention_in_days = 3
 
-  tags = merge(local.tags, {
-    Name = "Engraver Handler Logs"
-  })
+  #tags = merge(local.tags, {
+  #  Name = "Engraver Handler Logs"
+  #})
 }
 
 # lambda permission for API Gateway to invoke
