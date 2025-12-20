@@ -39,6 +39,7 @@ env:
 jobs:
   npm-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     strategy:
       fail-fast: true
@@ -98,6 +99,7 @@ jobs:
 
   terraform-plan:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: npm-build
     strategy:
       fail-fast: true
@@ -192,6 +194,7 @@ jobs:
 
   deploy-dev:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [terraform-plan, npm-build]
 
     strategy:
