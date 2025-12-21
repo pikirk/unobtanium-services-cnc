@@ -28,7 +28,7 @@ resource "aws_lambda_function" "engraver_handler" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.lambda_logging,
+    aws_iam_role_policy_attachment.lambda_logging_policy_attachment,
     aws_s3_bucket.lambda_artifacts
   ]
 
