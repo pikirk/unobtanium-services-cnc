@@ -91,7 +91,8 @@ jobs:
           name: npm__${{ matrix.env }}__${{ env.NPM_PACKAGE_NAME}}__${{ matrix.env }}__${{ github.sha }}
           path: ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
           retention-days: 30
-      
+          
+      # BUGBUG: Upload in deploy job, as it's not used in the build job
       - name: Upload Artifact (S3)
         run: |
           archive_name=${{env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
