@@ -53,7 +53,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
 
 # lambda permission for API Gateway to invoke
 resource "aws_lambda_permission" "api_gateway" {
-  statement_id  = "AllowAPIGatewayInvoke"
+  statement_id  = "AllowAPIGatewayInvoke-${vars.lambda_function_name}"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.engraver_handler.function_name
   principal     = "apigateway.amazonaws.com"
