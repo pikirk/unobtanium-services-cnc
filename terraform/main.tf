@@ -21,6 +21,9 @@ resource "aws_lambda_function" "engraver_handler" {
   timeout     = var.lambda_timeout_secs
   memory_size = var.lambda_memory_size_mb
 
+  // when the hash changes, this will trigger the update of the lambda function
+  source_code_hash = filebase64sha256("../${var.lambda_function_name}_${local.env}.zip") 
+
   environment {
     variables = {
       ENVIRONMENT = local.env
