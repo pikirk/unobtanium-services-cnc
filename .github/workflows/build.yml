@@ -234,7 +234,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: npm__${{ matrix.env }}__${{ env.NPM_PACKAGE_NAME}}__${{ matrix.env }}__${{ github.sha }}
-          path: ${{github.workspace }}
+          path: ${{github.workspace }}/terraform
       - run: ls -l .
 
       - name: Download Artifacts (Plan)
