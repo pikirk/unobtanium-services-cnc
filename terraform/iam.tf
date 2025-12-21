@@ -31,13 +31,13 @@ data "aws_iam_policy_document" "lambda_logging" {
     ]
 
     resources = [
-      "arn:aws:logs:${local.aws_region}:*:log-group:/aws/lambda/${var.lambda_function_name}-${local.env}:*"
+      "arn:aws:logs:${local.aws_region}:*:log-group:/aws/lambda/${var.lambda_function_name}:*"
     ]
   }
 }
 
 resource "aws_iam_policy" "lambda_logging_policy" {
-  name        = "${var.lambda_function_name}-logging-policy-${local.env}"
+  name        = "${var.lambda_function_name}-logging-policy"
   description = "IAM policy for Lambda CloudWatch Logs"
   policy      = data.aws_iam_policy_document.lambda_logging.json
 }
