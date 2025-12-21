@@ -5,5 +5,5 @@ lambda_runtime               = "nodejs20.x"
 lambda_timeout_secs          = 30
 lambda_memory_size_mb        = 256
 lambda_handler               = "index.handler"
-lambda_artifact_key          = "handlers/engraver-handler_dev.zip"
+lambda_artifact_key          = "handlers/engraver-lambda_dev.zip"
 api_gateway_identifier       = "uxfr03zzl6"
