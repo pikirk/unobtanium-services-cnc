@@ -18,16 +18,6 @@ output "lambda_execution_role_arn" {
   value       = aws_iam_role.lambda_execution_role.arn
 }
 
-output "lambda_artifacts_bucket_name" {
-  description = "Name of the S3 bucket for Lambda artifacts"
-  value       = aws_s3_bucket.lambda_artifacts.id
-}
-
-output "lambda_artifacts_bucket_arn" {
-  description = "ARN of the S3 bucket for Lambda artifacts"
-  value       = aws_s3_bucket.lambda_artifacts.arn
-}
-
 output "api_gateway_id" {
   description = "ID of the API Gateway"
   value       = data.aws_apigatewayv2_api.gateway_lookup.id
