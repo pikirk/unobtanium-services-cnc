@@ -118,7 +118,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        env: [ dev, stage, prod ]
+        env: [ dev ]
         stack_path:
           - terraform 
 
