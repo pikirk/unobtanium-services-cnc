@@ -1,4 +1,4 @@
-data "aws_iam_policy_document" "lambda_assume_role_policy" {
+data "aws_iam_policy_document" "lambda_assume_role_policy_doc" {
   statement {
     effect = "Allow"
 
@@ -12,15 +12,15 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
 }
 
 resource "aws_iam_role" "lambda_execution_role" {
-  name               = "${var.lambda_function_name}-execution-role-${local.env}"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
+  name               = "${var.lambda_function_name}-execution-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy_doc.json
 
   tags = {
     Name = "Lambda Execution Role for ${var.lambda_function_name}-${local.env}"
   }
 }
 
-data "aws_iam_policy_document" "lambda_logging" {
+data "aws_iam_policy_document" "lambda_logging_doc" {
   statement {
     effect = "Allow"
 
@@ -39,10 +39,10 @@ data "aws_iam_policy_document" "lambda_logging" {
 resource "aws_iam_policy" "lambda_logging_policy" {
   name        = "${var.lambda_function_name}-logging-policy"
   description = "IAM policy for Lambda CloudWatch Logs"
-  policy      = data.aws_iam_policy_document.lambda_logging.json
+  policy      = data.aws_iam_policy_document.lambda_logging_doc.json
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_logging" {
+resource "aws_iam_role_policy_attachment" "lambda_logging_policy_attachment" {
   role       = aws_iam_role.lambda_execution_role.name
   policy_arn = aws_iam_policy.lambda_logging_policy.arn
 }

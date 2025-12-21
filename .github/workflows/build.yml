@@ -196,6 +196,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [terraform-plan, npm-build]
+    env:
+      TF_LOG: DEBUG
 
     strategy:
       fail-fast: true
