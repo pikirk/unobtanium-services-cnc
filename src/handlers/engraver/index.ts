@@ -13,7 +13,7 @@ export const handler = async (
     // Only handle GET requests
     if (method !== 'GET') {
       return formatResponse(
-        { error: 'Method not allowed' },
+        { error: 'Method/Verb not allowed' },
         405
       );
     }
