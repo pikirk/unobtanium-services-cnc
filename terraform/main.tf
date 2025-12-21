@@ -1,6 +1,11 @@
-# Data block to look up existing API Gateway
-data "aws_apigatewayv2_api" "main" {
+# data block to look up existing API Gateway
+data "aws_apigatewayv2_api" "gateway_lookup" {
   api_id = var.api_gateway_identifier
+}
+
+# data block to look up existing S3 artifacts bucket
+data "aws_s3_bucket" "s3_bucket_lookup" {
+  bucket = var.lambda_artifacts_bucket_name
 }
 
 resource "aws_lambda_function" "engraver_handler" {
@@ -9,7 +14,8 @@ resource "aws_lambda_function" "engraver_handler" {
   handler       = var.lambda_handler
   runtime       = var.lambda_runtime
 
-  s3_bucket = aws_s3_bucket.lambda_artifacts.id
+  # data lookup for S3 bucket ID
+  s3_bucket = data.aws_s3_bucket.s3_bucket_lookup.id 
   s3_key    = var.lambda_artifact_key
 
   timeout     = var.lambda_timeout_secs
@@ -52,5 +58,7 @@ resource "aws_lambda_permission" "api_gateway" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.engraver_handler.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${data.aws_apigatewayv2_api.main.execution_arn}/*/*"
+
+  # data lookup for API Gateway execution ARN
+  source_arn    = "${data.aws_apigatewayv2_api.gateway_lookup.execution_arn}/*/*"
 }

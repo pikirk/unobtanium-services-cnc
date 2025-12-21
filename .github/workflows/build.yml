@@ -29,7 +29,9 @@ permissions:
 env:
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
-  TF_PLAN_NAME: "engraver_lambda"
+  TF_PLAN_NAME: engraver-lambda
+  S3_BUCKET_NAME: lambda-artifacts-engraver
+  NPM_PACKAGE_NAME: engraver-lambda
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ROLE_NAME: github-actions-oidc
   AWS_REGION_OIDC: us-east-1
@@ -37,12 +39,15 @@ env:
 jobs:
   npm-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     strategy:
       fail-fast: true
       matrix:
         env: [ dev, stage, prod ]
-    
+        bucket_name:
+          - lambda-artifacts-engraver
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,23 +81,33 @@ jobs:
       - name: Package
         run: |
           cd dist
-          zip -r ../engraver-handler_${{ matrix.env }}.zip .
-          cd ..
-          ls -lh engraver-handler_${{ matrix.env }}.zip
+          zip -r ${{ env.NPM_PACKAGE_NAME }}.zip .
+          stat ${{ env.NPM_PACKAGE_NAME }}.zip
+          mv ${{ env.NPM_PACKAGE_NAME }}.zip ../${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
 
-      - name: Upload Artifact (Lambda)
+      - name: Upload Artifact (GitHub)
         uses: actions/upload-artifact@v4
         with:
-          name: engraver-handler-${{ matrix.env }}-${{ github.sha }}
-          path: engraver-handler_${{ matrix.env }}.zip
+          name: npm__${{ matrix.env }}__${{ env.NPM_PACKAGE_NAME}}__${{ matrix.env }}__${{ github.sha }}
+          path: ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
           retention-days: 30
+      
+      - name: Upload Artifact (S3)
+        run: |
+          archive_name=${{env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
+          aws s3 cp $archive_name s3://${{ env.S3_BUCKET_NAME }}/handlers/$archive_name  \
+            --metadata "git-commit=${{ github.sha }},git-branch=${{ github.ref_name }},build-timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          
+          echo "Successfully S3 upload to://${{ env.S3_BUCKET_NAME }}/handlers/$archive_name"
 
       - name: Clean Up
         run: |
           rm -rf dist
+          rm ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
 
   terraform-plan:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: npm-build
     strategy:
       fail-fast: true
@@ -184,3 +199,80 @@ jobs:
             ${{ matrix.stack_path }}/.terraform.lock.hcl
           if-no-files-found: error
           retention-days: 7
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [terraform-plan, npm-build]
+    env:
+      TF_LOG: DEBUG
+
+    strategy:
+      fail-fast: true
+      matrix:
+        env: [ dev ]
+        stack_path:
+          - terraform 
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE_NAME }}
+          aws-region: ${{ env.AWS_REGION_OIDC }}
+
+      - name: Download Artifacts (Lambda)
+        uses: actions/download-artifact@v4
+        with:
+          name: npm__${{ matrix.env }}__${{ env.NPM_PACKAGE_NAME}}__${{ matrix.env }}__${{ github.sha }}
+          path: ${{github.workspace }}
+      - run: ls -l .
+
+      - name: Download Artifacts (Plan)
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan__${{ matrix.env }}__${{ env.TF_PLAN_NAME }}__${{ github.sha }}
+          path: ${{github.workspace }}/terraform
+      - run: ls -l .
+      
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Working directory: $(pwd)"
+          echo "Initializing Terraform for ${{ matrix.stack_path }} in ${{ matrix.env }} environment"
+          terraform init \
+            -backend-config="./init/backend-${{matrix.env}}.hcl" \
+            -reconfigure \
+            -no-color
+      
+      - name: Terraform Workspace
+        working-directory: ${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Working directory: $(pwd)"
+          terraform workspace select ${{ matrix.env }} || terraform workspace new ${{ matrix.env }}
+          terraform workspace list
+
+      - name: Terraform Apply (DEV)
+        working-directory: ${{ matrix.stack_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tf_artifact_name=${{env.TF_PLAN_NAME }}_${{ matrix.env }}.tfplan
+          echo "Artifact name: $tf_artifact_name"
+          echo "Working directory: $(pwd)"
+          echo "Applying Terraform plan $tf_artifact_name to ${{ matrix.env }} environment"
+          terraform apply -auto-approve $tf_artifact_name -no-color
+
+     
