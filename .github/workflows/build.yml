@@ -95,10 +95,11 @@ jobs:
       - name: Upload Artifact (S3)
         run: |
           archive_name=${{env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
-          aws s3 cp $archive_name s3://${{ env.S3_BUCKET_NAME }}/handlers/$archive_name  \
+          bucket_name=${{env.S3_BUCKET_NAME}}-${{ matrix.env }}
+          aws s3 cp $archive_name s3://$bucket_name/handlers/$archive_name  \
             --metadata "git-commit=${{ github.sha }},git-branch=${{ github.ref_name }},build-timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           
-          echo "Successfully S3 upload to://${{ env.S3_BUCKET_NAME }}/handlers/$archive_name"
+          echo "Successfully S3 upload to://$bucket_name/handlers/$archive_name"
 
       - name: Clean Up
         run: |
