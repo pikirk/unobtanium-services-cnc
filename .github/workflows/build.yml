@@ -85,6 +85,10 @@ jobs:
           stat ${{ env.NPM_PACKAGE_NAME }}.zip
           mv ${{ env.NPM_PACKAGE_NAME }}.zip ../${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
 
+      - name: Package Verify
+        run: |
+          unzip -l ${{ env.NPM_PACKAGE_NAME }}_${{ matrix.env }}.zip | head -20
+
       - name: Upload Artifact (GitHub)
         uses: actions/upload-artifact@v4
         with:
