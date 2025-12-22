@@ -220,7 +220,7 @@ jobs:
     timeout-minutes: 15
     needs: [terraform-plan, npm-build]
     env:
-      TF_LOG: INFO # TRACE, DEBUG, INFO, WARN, ERROR, JSON or OFF
+      TF_LOG: OFF # TRACE, DEBUG, INFO, WARN, ERROR, JSON or OFF
 
     strategy:
       fail-fast: true
@@ -238,7 +238,8 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE_NAME }}
           aws-region: ${{ env.AWS_REGION_OIDC }}
-
+      
+      # Downloaded to compare the artifact hash - must be in same directory as the plan artifact
       - name: Download Artifacts (Lambda)
         uses: actions/download-artifact@v4
         with:
