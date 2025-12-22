@@ -2,7 +2,7 @@ import { Engraver, PaginationParams, PaginatedEngravers, HandlerResult } from '.
 
 // Mock data - replace with actual database calls
 const mockEngravers: Engraver[] = [
-  { id: '1', name: 'John Smith-Jacbos', location: 'Seattle, WA', specialty: 'Wood', active: true },
+  { id: '1', name: 'Billy-Bob Thornton', location: 'Seattle, WA', specialty: 'Wood', active: true },
   { id: '2', name: 'Jane Doe', location: 'Portland, OR', specialty: 'Metal', active: true },
   { id: '3', name: 'Bob Wilson', location: 'San Francisco, CA', specialty: 'Glass', active: true },
   { id: '4', name: 'Alice Brown', location: 'Denver, CO', specialty: 'Stone', active: false },

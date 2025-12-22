@@ -95,16 +95,6 @@ jobs:
           name: npm__${{ matrix.env }}__${{ env.NPM_PACKAGE_NAME}}__${{ matrix.env }}__${{ github.sha }}
           path: ${{ env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
           retention-days: 30
-          
-      # BUGBUG: Upload in deploy job, as it's not used in the build job
-      - name: Upload Artifact (S3)
-        run: |
-          archive_name=${{env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
-          bucket_name=${{env.S3_BUCKET_NAME}}-${{ matrix.env }}
-          aws s3 cp $archive_name s3://$bucket_name/handlers/$archive_name  \
-            --metadata "git-commit=${{ github.sha }},git-branch=${{ github.ref_name }},build-timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          
-          echo "Successfully S3 upload to://$bucket_name/handlers/$archive_name"
 
       - name: Clean Up
         run: |
@@ -215,7 +205,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  deploy-dev:
+  promote-dev:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [terraform-plan, npm-build]
@@ -292,5 +282,15 @@ jobs:
           echo "Working directory: $(pwd)"
           echo "Applying Terraform plan $tf_artifact_name to ${{ matrix.env }} environment"
           terraform apply -auto-approve $tf_artifact_name -no-color
+
+      - name: Upload Artifact (S3)
+        run: |
+          cd terraform
+          archive_name=${{env.NPM_PACKAGE_NAME}}_${{ matrix.env }}.zip
+          bucket_name=${{env.S3_BUCKET_NAME}}-${{ matrix.env }}
+          aws s3 cp $archive_name s3://$bucket_name/handlers/$archive_name  \
+            --metadata "git-commit=${{ github.sha }},git-branch=${{ github.ref_name }},build-timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          
+          echo "Successfully S3 upload to://$bucket_name/handlers/$archive_name"
 
      
