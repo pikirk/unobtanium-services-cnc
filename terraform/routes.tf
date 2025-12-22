@@ -1,6 +1,6 @@
 # Lambda integration
 resource "aws_apigatewayv2_integration" "engraver_handler" {
-  api_id = data.aws_apigatewayv2_api.main.id
+  api_id = data.aws_apigatewayv2_api.gateway_lookup.id
 
   integration_uri        = aws_lambda_function.engraver_handler.invoke_arn
   integration_type       = "AWS_PROXY"
@@ -12,14 +12,14 @@ resource "aws_apigatewayv2_integration" "engraver_handler" {
 
 # Route: GET /engraver (list all engravers with pagination)
 resource "aws_apigatewayv2_route" "get_engravers" {
-  api_id    = data.aws_apigatewayv2_api.main.id
+  api_id    = data.aws_apigatewayv2_api.gateway_lookup.id
   route_key = "GET /engraver"
   target    = "integrations/${aws_apigatewayv2_integration.engraver_handler.id}"
 }
 
 # Route: GET /engraver/{id} (get specific engraver)
 resource "aws_apigatewayv2_route" "get_engraver_by_id" {
-  api_id    = data.aws_apigatewayv2_api.main.id
+  api_id    = data.aws_apigatewayv2_api.gateway_lookup.id
   route_key = "GET /engraver/{id}"
   target    = "integrations/${aws_apigatewayv2_integration.engraver_handler.id}"
 }
@@ -30,5 +30,5 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.engraver_handler.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${data.aws_apigatewayv2_api.main.execution_arn}/*/*"
+  source_arn    = "${data.aws_apigatewayv2_api.gateway_lookup.execution_arn}/*/*"
 }

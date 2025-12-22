@@ -50,3 +50,8 @@ variable "api_gateway_identifier" {
   description = "Name of the existing API Gateway to attach routes to"
   type        = string
 }
+
+variable "lambda_package_file_name" {
+  description = "Name of the Lambda package file"
+  type        = string
+}
