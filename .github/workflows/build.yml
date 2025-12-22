@@ -220,7 +220,7 @@ jobs:
     timeout-minutes: 15
     needs: [terraform-plan, npm-build]
     env:
-      TF_LOG: DEBUG
+      TF_LOG: INFO # TRACE, DEBUG, INFO, WARN, ERROR, JSON or OFF
 
     strategy:
       fail-fast: true
