@@ -1,14 +1,22 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayProxyEvent, APIGatewayProxyEventV2, APIGatewayProxyResult, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { getEngravers } from './get-engraver';
 import { getEngraverById } from './get-engraver-by-id';
 import { formatResponse } from './utils';
 
 export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResultV2> => {
   try {
-    const method = event.httpMethod;
+    const method = event.requestContext.http.method;
     const pathParameters = event.pathParameters;
+
+    console.log('Event received:', event);
+
+    // Only handle GET requests
+    console.log({
+      pathParameters,
+      method
+    });
 
     // Only handle GET requests
     if (method !== 'GET') {

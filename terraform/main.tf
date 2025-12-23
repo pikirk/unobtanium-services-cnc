@@ -46,8 +46,9 @@ resource "aws_lambda_function" "engraver_handler" {
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.lambda_function_name}-${local.env}"
+  name              = "/aws/lambda/${var.lambda_function_name}"
   retention_in_days = 3
+  region = local.aws_region
 
   tags = merge(local.tags, {
     Name = "Engraver Handler Logs"
