@@ -11,6 +11,12 @@ export const handler = async (
     const pathParameters = event.pathParameters;
 
     // Only handle GET requests
+    console.log({
+      pathParameters,
+      method
+    });
+
+    // Only handle GET requests
     if (method !== 'GET') {
       return formatResponse(
         { error: 'Method/Verb not allowed' },
