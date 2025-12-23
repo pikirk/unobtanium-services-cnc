@@ -31,7 +31,7 @@ data "aws_iam_policy_document" "lambda_logging" {
     ]
 
     resources = [
-      "arn:aws:logs:${local.aws_region}:*:log-group:/aws/lambda/${var.lambda_function_name}-${local.env}:*"
+      "arn:aws:logs:${local.aws_region}:*:log-group:/aws/lambda/${var.lambda_function_name}:*"
     ]
   }
 }
