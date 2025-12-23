@@ -10,6 +10,8 @@ export const handler = async (
     const method = event.httpMethod;
     const pathParameters = event.pathParameters;
 
+    console.log('Event received:', event);
+
     // Only handle GET requests
     console.log({
       pathParameters,
