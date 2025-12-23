@@ -7,7 +7,7 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const method = event.httpMethod;
+    const method = event.requestContext.httpMethod;
     const pathParameters = event.pathParameters;
 
     console.log('Event received:', event);
