@@ -43,7 +43,7 @@ variable "lambda_handler" {
 variable "lambda_artifact_key" {
   description = "S3 key for Lambda deployment package"
   type        = string
-  default     = "handlers/engraver-handler.zip"
+  default     = "handlers/engraver/engraver-handler.zip"
 }
 
 variable "api_gateway_identifier" {

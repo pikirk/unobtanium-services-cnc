@@ -1,10 +1,10 @@
 env                          = "dev"
-lambda_artifacts_bucket_name = "lambda-artifacts-engraver-dev"
+lambda_artifacts_bucket_name = "lambda-artifacts-services-dev"
 lambda_function_name         = "engraver-handler-dev"
 lambda_runtime               = "nodejs20.x"
 lambda_timeout_secs          = 30
 lambda_memory_size_mb        = 256
 lambda_handler               = "index.handler"
 lambda_package_file_name     = "engraver-lambda_dev.zip"
-lambda_artifact_key          = "handlers/engraver-lambda_dev.zip"
+lambda_artifact_key          = "handlers/engraver/engraver-lambda_dev.zip"
 api_gateway_identifier       = "uxfr03zzl6"
