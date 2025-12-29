@@ -30,7 +30,7 @@ env:
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
   TF_PLAN_NAME: engraver-lambda
-  S3_BUCKET_NAME: lambda-artifacts-engraver
+  S3_BUCKET_NAME: lambda-artifacts-services
   NPM_PACKAGE_NAME: engraver-lambda
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ROLE_NAME: github-actions-oidc
@@ -45,8 +45,6 @@ jobs:
       fail-fast: true
       matrix:
         env: [ dev, stage, prod ]
-        bucket_name:
-          - lambda-artifacts-engraver
 
     steps:
       - name: Checkout
